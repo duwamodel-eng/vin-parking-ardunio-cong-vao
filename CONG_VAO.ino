@@ -82,10 +82,9 @@ void openBarrier() {
   lcd.clear();
 
   lcd.setCursor(0, 0);
-  lcd.print("THE HOP LE");
-
+  lcd.print("KHUON MAT HOP LE");
   lcd.setCursor(0, 1);
-  lcd.print("MO BARRIER");
+  lcd.print("BAREM DANG MO");
 
   beep(1);
 
@@ -100,7 +99,7 @@ void openBarrier() {
   lcd.clear();
 
   lcd.setCursor(0, 0);
-  lcd.print("DANG DONG");
+  lcd.print("BAREM DANG DONG");
 
   // Đóng từ từ
   for (int angle = 0; angle <= 90; angle += 3) {
@@ -109,10 +108,8 @@ void openBarrier() {
   }
 
   lcd.clear();
-
   lcd.setCursor(0, 0);
-  lcd.print("VIN PARKING");
-
+  lcd.print("CONG VAO");
   lcd.setCursor(0, 1);
   lcd.print("QUET THE RFID");
 }
@@ -135,10 +132,8 @@ void rejectCard() {
   delay(2000);
 
   lcd.clear();
-
   lcd.setCursor(0, 0);
-  lcd.print("VIN PARKING");
-
+  lcd.print("CONG VAO");
   lcd.setCursor(0, 1);
   lcd.print("QUET THE RFID");
 }
@@ -208,7 +203,7 @@ void setup() {
   lcd.clear();
 
   lcd.setCursor(0, 0);
-  lcd.print("VIN PARKING");
+  lcd.print("CONG VAO");
 
   lcd.setCursor(0, 1);
   lcd.print("QUET THE RFID");
@@ -258,71 +253,109 @@ void loop() {
   lcd.setCursor(0, 0);
   lcd.print("DANG XAC THUC");
 
-
 String result = readPiCommand(330000);
 
 if (result == "RESULT,REGISTERED") {
-  // Chế độ đăng ký RFID: không mở barrier.
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("DA NHAN UID");
-  lcd.setCursor(0, 1);
-  lcd.print("DANG KY RFID");
-  beep(1);
-  delay(1500);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("DA NHAN UID");
+    lcd.setCursor(0, 1);
+    lcd.print("DANG KY RFID");
+    beep(1);
+    delay(1500);
 
 } else if (result == "RESULT,CARD_VALID") {
-  // Thẻ hợp lệ: chờ quyết định xác thực khuôn mặt.
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("THE HOP LE");
-  lcd.setCursor(0, 1);
-  lcd.print("CHO KHUON MAT");
 
-  // Đọc kết quả thứ hai từ Raspberry Pi.
-  result = readPiCommand(180000);
-  Serial.printf("[PI RESULT 2] '%s' at %lu ms\n",
-              result.c_str(), millis());
-
-  if (result == "RESULT,ENTRY_ALLOWED") {
-    openBarrier();
-  } else if (result == "RESULT,FACE_DENIED") {
-    Serial.println("[LCD] Display FACE_DENIED");
-
+    // RFID hợp lệ: chờ biển số.
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("KHUON MAT SAI");
+    lcd.print("THE HOP LE");
     lcd.setCursor(0, 1);
-    lcd.print("TU CHOI!");
+    lcd.print("CHO BIEN SO");
 
-    beep(3, 100);
-    delay(3000);
-  } else if (result == "RESULT,FACE_TIMEOUT") {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("HET THOI GIAN");
-    lcd.setCursor(0, 1);
-    lcd.print("QUET LAI THE");
-    beep(2, 100);
-    delay(2000);
-  } else {
-    // Không nhận được kết quả hợp lệ: đóng cổng.
-    rejectCard();
-  }
+    result = readPiCommand(120000);
+
+    if (result == "RESULT,PLATE_VALID") {
+
+        // Biển số hợp lệ: chờ khuôn mặt.
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("BIEN SO HOP LE");
+        lcd.setCursor(0, 1);
+        lcd.print("CHO KHUON MAT");
+
+        result = readPiCommand(180000);
+
+        if (result == "RESULT,ENTRY_ALLOWED") {
+
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("KHUON MAT HOP LE");
+            delay(700);
+
+            openBarrier();
+
+        } else if (result == "RESULT,FACE_DENIED") {
+
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("KHUON MAT SAI");
+            lcd.setCursor(0, 1);
+            lcd.print("TU CHOI!");
+            beep(3, 100);
+            delay(2000);
+
+        } else if (result == "RESULT,FACE_TIMEOUT") {
+
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("HET THOI GIAN");
+            lcd.setCursor(0, 1);
+            lcd.print("QUET LAI THE");
+            beep(2, 100);
+            delay(2000);
+
+        } else {
+            rejectCard();
+        }
+
+    } else if (result == "RESULT,PLATE_DENIED") {
+
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("BIEN SO SAI");
+        lcd.setCursor(0, 1);
+        lcd.print("TU CHOI!");
+        beep(3, 100);
+        delay(2000);
+
+    } else if (result == "RESULT,PLATE_TIMEOUT") {
+
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("KHONG CO BIEN SO");
+        lcd.setCursor(0, 1);
+        lcd.print("QUET LAI THE");
+        beep(2, 100);
+        delay(2000);
+
+    } else {
+        rejectCard();
+    }
 
 } else {
-  // Thẻ sai, lỗi giao tiếp hoặc hết thời gian: đóng cổng.
-  rejectCard();
+    rejectCard();
 }
 
+// Trở về màn hình chờ cổng vào.
 lcd.clear();
 lcd.setCursor(0, 0);
-lcd.print("VIN PARKING");
+lcd.print("CONG VAO");
 lcd.setCursor(0, 1);
 lcd.print("QUET THE RFID");
 
-rfid.PICC_HaltA();
-rfid.PCD_StopCrypto1();
+
+
 delay(500);
 
 }
